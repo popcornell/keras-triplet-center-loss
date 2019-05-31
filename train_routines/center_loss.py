@@ -3,17 +3,22 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 from load_mnist import load_mnist
 from base_network import cnn
-from triplet import generate_triplet, triplet_loss
+from triplet import generate_triplet
 from sklearn.preprocessing import LabelBinarizer
+from tensorflow.keras.layers import concatenate, Lambda, Embedding
+import tensorflow.keras.backend as K
 import numpy as np
+from tensorflow.keras.callbacks import TensorBoard
 import os
 
-def train(outdir, batch_size, n_epochs, lr):
+
+def train(outdir, batch_size, n_epochs, lr, loss_weights):
 
     outdir = outdir + "/center_loss/"
 
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
+
 
     x_train, y_train, y_train_onehot, x_test, y_test, y_test_onehot = load_mnist()
 
@@ -22,16 +27,13 @@ def train(outdir, batch_size, n_epochs, lr):
     softmax, pre_logits = cnn(model_input)
 
     x_train_flat = x_train.reshape(-1, 784)
-    #x_test_flat = x_test.reshape(-1, 784)
+    # x_test_flat = x_test.reshape(-1, 784)
 
     X_train, Y_train = generate_triplet(x_train_flat, y_train, ap_pairs=150, an_pairs=150)
 
-    from tensorflow.keras.layers import concatenate, Lambda, Embedding
-    import tensorflow.keras.backend as K
-
     target_input = Input((1,), name='target_input')
 
-    center = Embedding(10, 32)(target_input)
+    center = Embedding(10, 8)(target_input)
     l2_loss = Lambda(lambda x: K.sum(K.square(x[0] - x[1][:, 0]), 1, keepdims=True), name='l2_loss_anchor')(
         [pre_logits, center])
 
@@ -56,33 +58,34 @@ def train(outdir, batch_size, n_epochs, lr):
     model = Model(inputs=[anchor_input, positive_input, negative_input, target_anchor_input, target_positive_input,
                           target_negative_input], outputs=[merged_soft, merged_l2])
     model.compile(loss=["categorical_crossentropy", lambda y_true, y_pred: y_pred],
-                  optimizer=tf.keras.optimizers.Adam(lr=lr), metrics=["accuracy"],
+                  optimizer=tf.keras.optimizers.Adam(lr=lr), metrics=["accuracy"], loss_weights=loss_weights
                   )
+
 
     le = LabelBinarizer()
 
-    Anchor = X_train[:, 0, :].reshape(-1, 28, 28, 1)
-    Positive = X_train[:, 1, :].reshape(-1, 28, 28, 1)
-    Negative = X_train[:, 2, :].reshape(-1, 28, 28, 1)
+    anchor = X_train[:, 0, :].reshape(-1, 28, 28, 1)
+    positive = X_train[:, 1, :].reshape(-1, 28, 28, 1)
+    negative = X_train[:, 2, :].reshape(-1, 28, 28, 1)
 
-    Y_Anchor = le.fit_transform(Y_train[:, 0])
-    Y_Positive = le.fit_transform(Y_train[:, 1])
-    Y_Negative = le.fit_transform(Y_train[:, 2])
+    y_anchor = le.fit_transform(Y_train[:, 0])
+    y_positive = le.fit_transform(Y_train[:, 1])
+    y_negative = le.fit_transform(Y_train[:, 2])
 
-    target = np.concatenate((Y_Anchor, Y_Positive, Y_Negative), -1)
+    target = np.concatenate((y_anchor, y_positive,y_negative), -1)
 
-    model.fit([Anchor, Positive, Negative, Y_train[:, 0], Y_train[:, 1], Y_train[:, 2]], y=[target, target],
-              batch_size=batch_size, epochs=n_epochs, validation_split=0.2)
+    model.fit([anchor, positive, negative, Y_train[:, 0], Y_train[:, 1], Y_train[:, 2]], y=[target, target],
+              batch_size=batch_size, epochs=n_epochs, callbacks=[TensorBoard(log_dir= outdir)], validation_split = 0.2)
 
-    model.save("center_loss_model.h5")
+    model.save(outdir + "center_loss_model.h5")
 
     model = Model(inputs=[anchor_input, target_anchor_input], outputs=[soft_anchor, l2_anchor, pre_logits_anchor])
-    model.load_weights("center_loss_model.h5")
+    model.load_weights(outdir + "center_loss_model.h5")
 
     _, _, X_train_embed = model.predict([x_train[:512], y_train[:512]])
     _, _, X_test_embed = model.predict([x_test[:512], y_train[:512]])
 
     from TSNE_plot import tsne_plot
 
-    tsne_plot(X_train_embed, y_train, X_test_embed, y_test, "center_loss")
+    tsne_plot(outdir, "center_loss", X_train_embed, X_test_embed,y_train, y_test)
 

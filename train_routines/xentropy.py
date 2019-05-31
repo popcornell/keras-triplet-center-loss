@@ -71,4 +71,4 @@ def train(outdir, batch_size, n_epochs, lr):
 
     from TSNE_plot import tsne_plot
 
-    tsne_plot(X_train_embed, y_train, X_test_embed, y_test, "xentropy")
+    tsne_plot(outdir, "xentropy_loss", X_train_embed, X_test_embed,y_train, y_test)

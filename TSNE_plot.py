@@ -8,7 +8,7 @@ from tensorflow.contrib.tensorboard.plugins import projector
 
 
 
-def scatter(x, labels, subtitle=None):
+def scatter(outdir, x, labels, subtitle=None):
     # We choose a color palette with seaborn.
     palette = np.array(sns.color_palette("hls", 10))
 
@@ -36,17 +36,17 @@ def scatter(x, labels, subtitle=None):
     if subtitle != None:
         plt.suptitle(subtitle)
 
-    plt.savefig(subtitle)
+    plt.savefig(outdir + "/" + subtitle)
 
 
-def tsne_plot(x_train, x_test, y_train, y_test, name):
+def tsne_plot(outdir, name, x_train, x_test, y_train, y_test):
 
     tsne = TSNE()
     train_tsne_embeds = tsne.fit_transform(x_train[:512])
-    scatter(train_tsne_embeds, y_train[:512], "Samples from {} Data".format(name))
+    scatter(outdir, train_tsne_embeds, y_train[:512], "Samples from Train Data, {}".format(name))
 
     eval_tsne_embeds = tsne.fit_transform(x_test[:512])
-    scatter(eval_tsne_embeds, y_test[:512], "Samples from {} Data".format(name))
+    scatter(outdir, eval_tsne_embeds, y_test[:512], "Samples from Test Data, {}".format(name))
 
 
 def to_tb_projector(outdir, x_train, x_test, y_train, y_test):
