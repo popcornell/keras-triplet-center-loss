@@ -3,6 +3,9 @@ import numpy as np
 import matplotlib.patheffects as PathEffects
 import seaborn as sns
 import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.contrib.tensorboard.plugins import projector
+
 
 
 def scatter(x, labels, subtitle=None):
@@ -37,12 +40,30 @@ def scatter(x, labels, subtitle=None):
 
 
 def tsne_plot(x_train, x_test, y_train, y_test, name):
-    x_train_flat = x_train.reshape(-1, 784)
-    x_test_flat = x_test.reshape(-1, 784)
 
     tsne = TSNE()
-    train_tsne_embeds = tsne.fit_transform(x_train_flat[:512])
+    train_tsne_embeds = tsne.fit_transform(x_train[:512])
     scatter(train_tsne_embeds, y_train[:512], "Samples from {} Data".format(name))
 
-    eval_tsne_embeds = tsne.fit_transform(x_test_flat[:512])
+    eval_tsne_embeds = tsne.fit_transform(x_test[:512])
     scatter(eval_tsne_embeds, y_test[:512], "Samples from {} Data".format(name))
+
+
+def to_tb_projector(outdir, x_train, x_test, y_train, y_test):
+    tf_data = tf.Variable(x_train)
+
+    LOG_DIR = outdir + '/tf_data.ckpt'
+
+    with tf.Session() as sess:
+        saver = tf.train.Saver([tf_data])
+        sess.run(tf_data.initializer)
+        saver.save(sess, LOG_DIR )
+        config = projector.ProjectorConfig()
+
+        # Saves a config file that TensorBoard will read during startup.
+        projector.visualize_embeddings(tf.summary.FileWriter(LOG_DIR), config)
+
+
+
+
+
