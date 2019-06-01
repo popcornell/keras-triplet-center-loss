@@ -12,9 +12,10 @@ from tensorflow.keras.callbacks import TensorBoard
 import os
 
 
-def train(outdir, batch_size, n_epochs, lr, loss_weights):
-
+def train(outdir, batch_size, n_epochs, lr, embedding_size, loss_weights):
+    print("#" * 100)
     print("Training with Triplet Center Loss....")
+    print("#" * 100)
 
     outdir = outdir + "/triplet_center_loss/"
 
@@ -25,21 +26,19 @@ def train(outdir, batch_size, n_epochs, lr, loss_weights):
 
     x_input = Input(shape=(28, 28, 1))
 
-    softmax, pre_logits = cnn(x_input)
+    softmax, pre_logits = cnn(x_input, embedding_size)
 
     target_input = Input((1,), name='target_input')
 
-    center = Embedding(10, 8)(target_input)
+    center = Embedding(10, embedding_size)(target_input)
     l2_loss = Lambda(lambda x: K.sum(K.square(x[0] - x[1][:, 0]), 1, keepdims=True), name='l2_loss')(
         [pre_logits, center])
 
     model = tf.keras.models.Model(inputs=[x_input, target_input], outputs=[softmax, l2_loss])
 
-
     model.compile(loss=["categorical_crossentropy", triplet_center_loss],
                   optimizer=tf.keras.optimizers.Adam(lr=lr), metrics=["accuracy"],
                   loss_weights=loss_weights)
-
 
     model.fit([x_train, y_train], y=[y_train_onehot, y_train],
               batch_size=batch_size, epochs=n_epochs, callbacks=[TensorBoard(log_dir=outdir)], validation_split=0.2)
@@ -49,8 +48,8 @@ def train(outdir, batch_size, n_epochs, lr, loss_weights):
     model = Model(inputs=[x_input, target_input], outputs=[softmax, l2_loss, pre_logits])
     model.load_weights(outdir + "triplet_center_loss_model.h5")
 
-    _,_,  X_train_embed = model.predict([x_train[:512], y_train[:512]])
-    _,_,  X_test_embed = model.predict([x_test[:512], y_test[:512]])
+    _, _, X_train_embed = model.predict([x_train[:512], y_train[:512]])
+    _, _, X_test_embed = model.predict([x_test[:512], y_test[:512]])
 
     from TSNE_plot import tsne_plot
 

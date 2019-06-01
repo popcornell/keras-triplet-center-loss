@@ -1,3 +1,7 @@
+##########################################################################
+### Original implementation by shamangary: https://github.com/shamangary/Keras-MNIST-center-loss-with-visualization
+##########################################################################
+
 from tensorflow.keras.layers import Input
 import tensorflow as tf
 from tensorflow.keras.models import Model
@@ -12,9 +16,10 @@ from tensorflow.keras.callbacks import TensorBoard
 import os
 
 
-def train(outdir, batch_size, n_epochs, lr, loss_weights):
-
+def train(outdir, batch_size, n_epochs, lr, embedding_size, loss_weights):
+    print("#" * 100)
     print("Training with Center Loss....")
+    print("#" * 100)
 
     outdir = outdir + "/center_loss/"
 
@@ -25,11 +30,11 @@ def train(outdir, batch_size, n_epochs, lr, loss_weights):
 
     x_input = Input(shape=(28, 28, 1))
 
-    softmax, pre_logits = cnn(x_input)
+    softmax, pre_logits = cnn(x_input, embedding_size)
 
     target_input = Input((1,), name='target_input')
 
-    center = Embedding(10, 8)(target_input)
+    center = Embedding(10, embedding_size)(target_input)
     l2_loss = Lambda(lambda x: K.sum(K.square(x[0] - x[1][:, 0]), 1, keepdims=True), name='l2_loss')(
         [pre_logits, center])
 

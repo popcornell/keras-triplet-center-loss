@@ -1,3 +1,8 @@
+######################################################
+# Original implementation by KinWaiCheuk: https://github.com/KinWaiCheuk/Triplet-net-keras
+######################################################
+
+
 from sklearn.manifold import TSNE
 import numpy as np
 import matplotlib.patheffects as PathEffects
@@ -5,7 +10,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.contrib.tensorboard.plugins import projector
-
 
 
 def scatter(outdir, x, labels, subtitle=None):
@@ -40,30 +44,11 @@ def scatter(outdir, x, labels, subtitle=None):
 
 
 def tsne_plot(outdir, name, x_train, x_test, y_train, y_test):
-
     tsne = TSNE()
     train_tsne_embeds = tsne.fit_transform(x_train[:512])
     scatter(outdir, train_tsne_embeds, y_train[:512], "Samples from Train Data, {}".format(name))
 
     eval_tsne_embeds = tsne.fit_transform(x_test[:512])
     scatter(outdir, eval_tsne_embeds, y_test[:512], "Samples from Test Data, {}".format(name))
-
-
-def to_tb_projector(outdir, x_train, x_test, y_train, y_test):
-    tf_data = tf.Variable(x_train)
-
-    LOG_DIR = outdir + '/tf_data.ckpt'
-
-    with tf.Session() as sess:
-        saver = tf.train.Saver([tf_data])
-        sess.run(tf_data.initializer)
-        saver.save(sess, LOG_DIR )
-        config = projector.ProjectorConfig()
-
-        # Saves a config file that TensorBoard will read during startup.
-        projector.visualize_embeddings(tf.summary.FileWriter(LOG_DIR), config)
-
-
-
 
 

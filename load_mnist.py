@@ -2,8 +2,7 @@ from sklearn.preprocessing import LabelBinarizer
 
 
 def load_mnist():
-
-    def _load_mnist(fashion = False):
+    def _load_mnist(fashion=False):
 
         if fashion:
             from tensorflow.keras.datasets import fashion_mnist as mnist
@@ -26,7 +25,6 @@ def load_mnist():
 
     x_train, y_train, x_test, y_test = _load_mnist()
 
-
     le = LabelBinarizer()
 
     y_train_onehot = le.fit_transform(y_train)
@@ -36,4 +34,3 @@ def load_mnist():
     x_test = x_test.reshape(*x_test.shape, 1)
 
     return x_train, y_train, y_train_onehot, x_test, y_test, y_test_onehot
-

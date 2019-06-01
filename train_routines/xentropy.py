@@ -12,8 +12,10 @@ from tensorflow.keras.callbacks import TensorBoard
 import os
 
 
-def train(outdir, batch_size, n_epochs, lr):
+def train(outdir, batch_size, n_epochs, lr, embedding_size):
+    print("#" * 100)
     print("Training with Categorical CrossEntropy Only Loss....")
+    print("#" * 100)
 
     outdir = outdir + "/xentropy_only_loss/"
 
@@ -24,8 +26,7 @@ def train(outdir, batch_size, n_epochs, lr):
 
     x_input = Input(shape=(28, 28, 1))
 
-    softmax, pre_logits = cnn(x_input)
-
+    softmax, pre_logits = cnn(x_input, embedding_size)
 
     model = tf.keras.models.Model(inputs=[x_input], outputs=[softmax])
 
@@ -38,11 +39,11 @@ def train(outdir, batch_size, n_epochs, lr):
 
     model.save(outdir + "xentropy_loss_model.h5")
 
-    model = Model(inputs=[x_input], outputs=[softmax,  pre_logits])
+    model = Model(inputs=[x_input], outputs=[softmax, pre_logits])
     model.load_weights(outdir + "xentropy_loss_model.h5")
 
-    _,  X_train_embed = model.predict([x_train[:512]])
-    _,  X_test_embed = model.predict([x_test[:512]])
+    _, X_train_embed = model.predict([x_train[:512]])
+    _, X_test_embed = model.predict([x_test[:512]])
 
     from TSNE_plot import tsne_plot
 
