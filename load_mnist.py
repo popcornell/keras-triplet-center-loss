@@ -1,5 +1,4 @@
 from sklearn.preprocessing import LabelBinarizer
-from tensorflow.keras.datasets import fashion_mnist as mnist
 
 
 def load_mnist():

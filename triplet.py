@@ -2,6 +2,7 @@
 import tensorflow.keras.backend as K
 from itertools import permutations
 import random
+import tensorflow as tf
 
 import numpy as np
 
@@ -73,7 +74,7 @@ def triplet_loss(y_true, y_pred, alpha=0.4):
     return loss
 
 
-def center_triplet_loss(y_true, y_pred, alpha=0.4):
+def triplet_center_loss(y_true, y_pred, n_classes= 10, alpha=0.4):
     """
     Implementation of the triplet loss function
     Arguments:
@@ -91,18 +92,31 @@ def center_triplet_loss(y_true, y_pred, alpha=0.4):
     #     print('total_lenght=',  total_lenght)
     #     total_lenght =12
 
-    anchor = y_pred[:, 0:int(total_lenght * 1 / 3)]
-    positive = y_pred[:, int(total_lenght * 1 / 3):int(total_lenght * 2 / 3)]
-    negative = y_pred[:, int(total_lenght * 2 / 3):int(total_lenght * 3 / 3)]
+    # repeat y_true for n_classes and == np.arange(n_classes)
+    # repeat also y_pred and apply mask
+    # obtain min for each column min vector for each class
 
-    # distance between the anchor and the positive
-    pos_dist = K.sum(anchor - positive, axis=1)
+    classes = tf.range(0, n_classes,dtype=tf.float32)
+    y_pred_r = tf.reshape(y_pred, (tf.shape(y_pred)[0], 1))
+    y_pred_r = tf.keras.backend.repeat(y_pred_r, n_classes)
 
-    # distance between the anchor and the negative
-    neg_dist = K.sum(anchor - negative, axis=1)
+    y_true_r = tf.reshape(y_true, (tf.shape(y_true)[0], 1))
+    y_true_r = tf.keras.backend.repeat(y_true_r, n_classes)
 
-    # compute loss
-    basic_loss = pos_dist - neg_dist + alpha
-    loss = K.maximum(basic_loss, 0.0)
+    mask = tf.equal(y_true_r[:, :, 0], classes)
+
+    #mask2 = tf.ones((tf.shape(y_true_r)[0], tf.shape(y_true_r)[1]))  # todo inf
+
+    # use tf.where(tf.equal(masked, 0.0), np.inf*tf.ones_like(masked), masked)
+
+    masked = y_pred_r[:, :, 0] * tf.cast(mask, tf.float32) #+ (mask2 * tf.cast(tf.logical_not(mask), tf.float32))*tf.constant(float(2**10))
+    masked = tf.where(tf.equal(masked, 0.0), np.inf*tf.ones_like(masked), masked)
+
+    minimums = tf.math.reduce_min(masked, axis=1)
+
+    loss = K.max(y_pred - minimums +alpha ,0)
+
+    # obtain a mask for each pred
+
 
     return loss
