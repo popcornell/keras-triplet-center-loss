@@ -26,3 +26,7 @@ Running **main.py** will start sequentially 4 training routines with 4 different
 * Triplet-loss + Categorical Crossentropy 
 * Triplet-Center loss + Categorical Crossentropy 
 
+In Folder **runs** there will be the results of those models, including Tensorboard summaries. 
+Also T-SNE is run on the embeddings to visualize how the network internal representation changes as the loss is changed.
+
+![Image of Triplet_Center_Loss](https://github.com/popcornell/keras-triplet-center-loss/blob/master/runs/triplet_center_loss/Samples%20from%20Train%20Data%2C%20triplet_center_loss.png)
