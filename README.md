@@ -47,5 +47,5 @@ Also T-SNE is run on the embeddings to visualize how the network internal repres
 
 ![Image of _Triplet_Loss](https://github.com/popcornell/keras-triplet-center-loss/blob/master/runs/triplet_loss/Samples%20from%20Train%20Data%2C%20triplet_loss.png)
 
-As it can be seen the triplet-center loss maximises both the inter-class distance while keeping the Center-loss characteristic of minimizing intra-class distance. 
+As it can be seen the triplet-center loss maximises the inter-class distance as the Triplet Loss while keeping the Center-loss characteristic of minimizing intra-class distance. 
 Another advantage of Triplet-Center loss is that it does not need advanced batching and triplet selection mining techniques as the Triplet-Loss does. 
